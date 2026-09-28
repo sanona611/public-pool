@@ -100,7 +100,7 @@ describe('MiningJob', () => {
         it('should create a new MiningJob if POOL_IDENTIFIER is not set and use the default', () => {
             const expectedMiningIdentifier = 'Public-Pool';
             expect(jobTemplate.block).toBeDefined();
-            const miningJob = new MiningJob(configService, bitcoinjs.networks.testnet, '1', payoutInformation, jobTemplate);
+            const miningJob = new MiningJob(configService, bitcoinjs.networks.testnet, '1', payoutInformation, jobTemplate, '57a6f098');
 
             const response = JSON.parse(miningJob.response(jobTemplate));
 
@@ -119,7 +119,7 @@ describe('MiningJob', () => {
                 return null;
             });
 
-            const miningJob = new MiningJob(configService, bitcoinjs.networks.testnet, '1', payoutInformation, jobTemplate);
+            const miningJob = new MiningJob(configService, bitcoinjs.networks.testnet, '1', payoutInformation, jobTemplate, '57a6f098');
             const response = JSON.parse(miningJob.response(jobTemplate));
 
             const miningIdentifier = extractPoolIdentifierFromScript(response.params[2]);
@@ -138,7 +138,7 @@ describe('MiningJob', () => {
                 return null;
             });
 
-            const miningJob = new MiningJob(configService, bitcoinjs.networks.testnet, '1', payoutInformation, jobTemplate);
+            const miningJob = new MiningJob(configService, bitcoinjs.networks.testnet, '1', payoutInformation, jobTemplate, '57a6f098');
             const response = JSON.parse(miningJob.response(jobTemplate));
 
             const miningIdentifier = extractPoolIdentifierFromScript(response.params[2]);
@@ -157,7 +157,7 @@ describe('MiningJob', () => {
                 return null;
             });
 
-            const miningJob = new MiningJob(configService, bitcoinjs.networks.testnet, '1', payoutInformation, jobTemplate);
+            const miningJob = new MiningJob(configService, bitcoinjs.networks.testnet, '1', payoutInformation, jobTemplate, '57a6f098');
             const response = JSON.parse(miningJob.response(jobTemplate));
 
             const miningIdentifier = extractPoolIdentifierFromScript(response.params[2]);
@@ -175,7 +175,7 @@ describe('MiningJob', () => {
                 return null;
             });
 
-            const miningJob = new MiningJob(configService, bitcoinjs.networks.testnet, '1', payoutInformation, jobTemplate);
+            const miningJob = new MiningJob(configService, bitcoinjs.networks.testnet, '1', payoutInformation, jobTemplate, '57a6f098');
             const response = JSON.parse(miningJob.response(jobTemplate));
 
             const miningIdentifier = extractPoolIdentifierFromScript(response.params[2]);
@@ -208,7 +208,8 @@ describe('MiningJob', () => {
                 bitcoinjs.networks.testnet,
                 '1',
                 [{ address: 'tb1qumezefzdeqqwn5zfvgdrhxjzc5ylr39uhuxcz4', percent: 100 }],
-                jobTemplate
+                jobTemplate,
+                '57a6f098'
             );
         });
 

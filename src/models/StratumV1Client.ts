@@ -24,7 +24,7 @@ import { ConfigurationMessage } from './stratum-messages/ConfigurationMessage';
 import { MiningSubmitMessage } from './stratum-messages/MiningSubmitMessage';
 import { StratumErrorMessage } from './stratum-messages/StratumErrorMessage';
 import { SubscriptionMessage } from './stratum-messages/SubscriptionMessage';
-import { EXTRANONCE1_SIZE_BYTES } from './stratum.constants';
+import { EXTRANONCE1_SIZE_BYTES, EXTRANONCE2_SIZE_BYTES } from './stratum.constants';
 import { SuggestDifficulty } from './stratum-messages/SuggestDifficultyMessage';
 import { StratumV1ClientStatistics } from './StratumV1ClientStatistics';
 import { ExternalSharesService } from '../services/external-shares.service';
@@ -53,6 +53,7 @@ export class StratumV1Client {
     private creatingEntity: Promise<void>;
 
     public extraNonceAndSessionId: string;
+    private currentExtranonce1: string;
     public sessionStart: Date;
     public noFee: boolean;
     public hashRate: number = 0;
@@ -160,11 +161,12 @@ export class StratumV1Client {
                         this.sessionStart = new Date();
                         this.statistics = new StratumV1ClientStatistics(this.clientStatisticsService);
                         this.extraNonceAndSessionId = this.getRandomHexString();
+                        this.currentExtranonce1 = this.extraNonceAndSessionId;
                         console.log(`New client ID: : ${this.extraNonceAndSessionId}, ${this.socket.remoteAddress}:${this.socket.remotePort}`);
                     }
 
                     this.clientSubscription = subscriptionMessage;
-                    const success = await this.write(JSON.stringify(this.clientSubscription.response(this.extraNonceAndSessionId)) + '\n');
+                    const success = await this.write(JSON.stringify(this.clientSubscription.response(this.currentExtranonce1)) + '\n');
                     if (!success) {
                         return;
                     }
@@ -413,6 +415,11 @@ export class StratumV1Client {
 
     private async sendNewMiningJob(jobTemplate: IJobTemplate) {
 
+        // Extranonce1 is job-scoped. Older jobs keep their own extranonce1 for
+        // correct share validation after a newer job changes the connection state.
+        const extranonce1 = this.getRandomHexString();
+        this.currentExtranonce1 = extranonce1;
+
         let payoutInformation;
         const devFeeAddress = this.configService.get('DEV_FEE_ADDRESS');
         //50Th/s
@@ -451,11 +458,21 @@ export class StratumV1Client {
             network,
             this.stratumV1JobsService.getNextId(),
             payoutInformation,
-            jobTemplate
+            jobTemplate,
+            extranonce1
         );
 
-        this.stratumV1JobsService.addJob(job);
+        const setExtranonce = JSON.stringify({
+            id: null,
+            method: eResponseMethod.SET_EXTRANONCE,
+            params: [extranonce1, EXTRANONCE2_SIZE_BYTES]
+        }) + '\n';
+        const setExtranonceSuccess = await this.write(setExtranonce);
+        if (!setExtranonceSuccess) {
+            return;
+        }
 
+        this.stratumV1JobsService.addJob(job);
 
         const success = await this.write(job.response(jobTemplate));
         if (!success) {
@@ -551,7 +568,7 @@ export class StratumV1Client {
             jobTemplate,
             versionMask,
             nonce,
-            this.extraNonceAndSessionId,
+            job.extranonce1,
             submission.extraNonce2,
             timestamp
         );
@@ -572,7 +589,7 @@ export class StratumV1Client {
                     jobTemplate,
                     versionMask,
                     nonce,
-                    this.extraNonceAndSessionId,
+                    job.extranonce1,
                     submission.extraNonce2,
                     timestamp
                 );

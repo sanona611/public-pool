@@ -183,7 +183,9 @@ describe('StratumV1Client', () => {
         );
 
         client.extraNonceAndSessionId = MockRecording1.EXTRA_NONCE;
-        jest.spyOn(client as any, 'getRandomHexString').mockReturnValue(MockRecording1.EXTRA_NONCE);
+        jest.spyOn(client as any, 'getRandomHexString')
+            .mockReturnValueOnce(MockRecording1.EXTRA_NONCE)
+            .mockReturnValue('12345678');
 
     });
 
@@ -377,6 +379,7 @@ describe('StratumV1Client', () => {
         expect(notify.params[6]).toBe('192495f8');
         expect(notify.params[7]).toBe(MockRecording1.TIME);
         expect(notify.params[8]).toBe(true);
+        expect((client as any).write).toHaveBeenCalledWith(`{"id":null,"method":"mining.set_extranonce","params":["12345678",8]}\n`);
 
 
         emitMessage(MockRecording1.MINING_SUBMIT);
@@ -574,7 +577,9 @@ describe('StratumV1Client', () => {
             externalSharesService
         );
         jest.spyOn(secondClient as any, 'write').mockImplementation((data) => Promise.resolve(true));
-        jest.spyOn(secondClient as any, 'getRandomHexString').mockReturnValue(MockRecording1.EXTRA_NONCE);
+        jest.spyOn(secondClient as any, 'getRandomHexString')
+            .mockReturnValueOnce(MockRecording1.EXTRA_NONCE)
+            .mockReturnValue('12345678');
 
         socketEmitter(Buffer.from(`${MockRecording1.MINING_SUBSCRIBE}\n`));
         socketEmitter(Buffer.from(`${MockRecording1.MINING_AUTHORIZE}\n`));
