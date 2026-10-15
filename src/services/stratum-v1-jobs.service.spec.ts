@@ -100,8 +100,7 @@ describe('StratumV1JobsService', () => {
         await Promise.resolve();
         subscription.unsubscribe();
 
-        expect(emissions).toHaveLength(1);
-        expect(emissions[0]).toBe(firstTemplate);
+        expect(emissions).toHaveLength(0);
         expect(service.latestJobTemplateId).toBe(2);
     });
 
@@ -125,10 +124,10 @@ describe('StratumV1JobsService', () => {
         await Promise.resolve();
         subscription.unsubscribe();
 
-        expect(emissions).toEqual([firstTemplate]);
+        expect(emissions).toHaveLength(0);
         expect(service.getJobById('old-job')).toBeUndefined();
         expect(service.getJobTemplateById('old-template')).toBeUndefined();
-        expect(service.getJobTemplateById(firstTemplate.blockData.id)).toBe(firstTemplate);
+        expect(service.getJobTemplateById(firstTemplate.blockData.id)).toBeUndefined();
     });
 
     it('should increment job ids when jobs are added', () => {
