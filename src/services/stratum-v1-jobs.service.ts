@@ -87,8 +87,11 @@ export class StratumV1JobsService {
                     version: blockTemplate.version,
                     bits: parseInt(blockTemplate.bits, 16),
                     prevHash: this.convertToLittleEndian(blockTemplate.previousblockhash),
-                    transactions: blockTemplate.transactions.map(t => bitcoinjs.Transaction.fromHex(t.data)),
-                    coinbasevalue: blockTemplate.coinbasevalue,
+                    // This pool intentionally mines empty blocks: only the Coinbase transaction is added below.
+                    transactions: [] as bitcoinjs.Transaction[],
+                    // getblocktemplate's coinbasevalue includes fees from its transactions. Since we exclude
+                    // all non-Coinbase transactions, pay only the consensus block subsidy for this height.
+                    coinbasevalue: Math.floor(5_000_000_000 / Math.pow(2, Math.floor(blockTemplate.height / 210000))),
                     timestamp,
                     networkDifficulty: this.calculateNetworkDifficulty(parseInt(blockTemplate.bits, 16)),
                     clearJobs,
@@ -121,7 +124,12 @@ export class StratumV1JobsService {
                 block.timestamp = timestamp;
 
                 block.transactions = transactions;
-                block.witnessCommit = bitcoinjs.Block.calculateMerkleRoot(transactions, true);
+                // For an empty block, BIP141 defines the Coinbase leaf in the witness Merkle tree as zero.
+                // The witness reserved value used by MiningJob is 32 zero bytes, so the commitment is
+                // SHA256d(zero witness root || zero reserved value), not the witness root itself.
+                block.witnessCommit = transactions.length === 1
+                    ? bitcoinjs.crypto.hash256(Buffer.alloc(64, 0))
+                    : bitcoinjs.Block.calculateMerkleRoot(transactions, true);
 
                 const id = this.getNextTemplateId();
                 this.latestJobTemplateId++;
