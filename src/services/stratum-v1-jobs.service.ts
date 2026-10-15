@@ -73,9 +73,7 @@ export class StratumV1JobsService {
                     blockTemplate.version,
                     blockTemplate.bits,
                     timestamp,
-                    blockTemplate.height,
-                    blockTemplate.coinbasevalue,
-                    ...blockTemplate.transactions.map(tx => tx.hash ?? tx.txid ?? tx.data)
+                    blockTemplate.height
                 ].join('|');
 
                 if (!clearJobs && workSignature === this.lastWorkSignature) {
