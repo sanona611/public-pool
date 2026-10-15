@@ -36,7 +36,6 @@ export class StratumV1JobsService {
     // offset the interval so that all the cluster processes don't try and refresh at the same time.
     private delay = process.env.NODE_APP_INSTANCE == null ? 0 : parseInt(process.env.NODE_APP_INSTANCE) * 5000;
     private lastBlockHeight = 0;
-    private lastWorkSignature: string;
 
     constructor(
         private readonly bitcoinRpcService: BitcoinRpcService
@@ -66,22 +65,15 @@ export class StratumV1JobsService {
                     console.log('new block');
                 }
 
-                const currentTime = Math.floor(new Date().getTime() / 1000);
-                const timestamp = blockTemplate.mintime > currentTime ? blockTemplate.mintime : currentTime;
-                const workSignature = [
-                    blockTemplate.previousblockhash,
-                    blockTemplate.version,
-                    blockTemplate.bits,
-                    timestamp,
-                    blockTemplate.height,
-                    blockTemplate.coinbasevalue,
-                    ...blockTemplate.transactions.map(tx => tx.hash ?? tx.txid ?? tx.data)
-                ].join('|');
-
-                if (!clearJobs && workSignature === this.lastWorkSignature) {
+                // Periodic template refreshes must not create jobs for timestamp or mempool changes.
+                // Keep existing jobs/templates available for share validation until they expire.
+                if (!clearJobs) {
+                    this.pruneExpiredJobsAndTemplates();
                     return null;
                 }
-                this.lastWorkSignature = workSignature;
+
+                const currentTime = Math.floor(new Date().getTime() / 1000);
+                const timestamp = blockTemplate.mintime > currentTime ? blockTemplate.mintime : currentTime;
 
                 return {
                     version: blockTemplate.version,
@@ -142,25 +134,28 @@ export class StratumV1JobsService {
                 if (data.blockData.clearJobs) {
                     this.blocks = {};
                     this.jobs = {};
-                }else{
-                    const now = new Date().getTime();
-                    // Delete old templates (5 minutes)
-                    for(const templateId in this.blocks){
-                        if(now - this.blocks[templateId].blockData.creation  > (1000 * 60 * 5)){
-                            delete this.blocks[templateId];
-                        }
-                    }
-                    // Delete old jobs (5 minutes)
-                    for (const jobId in this.jobs) {
-                        if(now - this.jobs[jobId].creation > (1000 * 60 * 5)){
-                            delete this.jobs[jobId];
-                        }
-                    }
                 }
                 this.blocks[data.blockData.id] = data;
             }),
             shareReplay({ refCount: true, bufferSize: 1 })
         )
+    }
+
+    private pruneExpiredJobsAndTemplates() {
+        const now = new Date().getTime();
+
+        // Keep old jobs/templates for share validation for up to five minutes.
+        for (const templateId in this.blocks) {
+            if (now - this.blocks[templateId].blockData.creation > (1000 * 60 * 5)) {
+                delete this.blocks[templateId];
+            }
+        }
+
+        for (const jobId in this.jobs) {
+            if (now - this.jobs[jobId].creation > (1000 * 60 * 5)) {
+                delete this.jobs[jobId];
+            }
+        }
     }
 
     private calculateNetworkDifficulty(nBits: number) {
