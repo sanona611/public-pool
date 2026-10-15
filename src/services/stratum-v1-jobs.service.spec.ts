@@ -78,8 +78,8 @@ describe('StratumV1JobsService', () => {
         expect(Object.keys(service.blocks)).toHaveLength(1);
     });
 
-    it('should emit when transaction identity changes without changing transaction count', async () => {
-        await firstValueFrom(service.newMiningJob$);
+    it('should not emit a job when transaction identity changes without a new block', async () => {
+        const firstTemplate = await firstValueFrom(service.newMiningJob$);
         const emissions = [];
         const subscription = service.newMiningJob$.subscribe(jobTemplate => {
             emissions.push(jobTemplate);
@@ -99,15 +99,14 @@ describe('StratumV1JobsService', () => {
         await Promise.resolve();
         await Promise.resolve();
         subscription.unsubscribe();
-        const jobTemplate = emissions[emissions.length - 1];
 
-        expect(jobTemplate.blockData.clearJobs).toBe(false);
-        expect(jobTemplate.blockData.id).toBe('2');
-        expect(service.getJobTemplateById(jobTemplate.blockData.id)).toBe(jobTemplate);
+        expect(emissions).toHaveLength(1);
+        expect(emissions[0]).toBe(firstTemplate);
+        expect(service.latestJobTemplateId).toBe(2);
     });
 
-    it('should age old jobs and templates after five minutes', async () => {
-        await firstValueFrom(service.newMiningJob$);
+    it('should age old jobs and templates after five minutes without emitting a new job', async () => {
+        const firstTemplate = await firstValueFrom(service.newMiningJob$);
         const oldCreation = Date.now() - (1000 * 60 * 11);
         service.jobs['old-job'] = { jobId: 'old-job', creation: oldCreation } as any;
         service.blocks['old-template'] = {
@@ -115,16 +114,21 @@ describe('StratumV1JobsService', () => {
         } as any;
 
         jest.setSystemTime(new Date(Date.now() + (1000 * 60 * 11)));
-        const nextTemplate = firstValueFrom(service.newMiningJob$);
+        const emissions = [];
+        const subscription = service.newMiningJob$.subscribe(jobTemplate => {
+            emissions.push(jobTemplate);
+        });
         miningInfo$.next({
             blocks: MockRecording1.BLOCK_TEMPLATE.height
         } as IMiningInfo);
-        const jobTemplate = await nextTemplate;
+        await Promise.resolve();
+        await Promise.resolve();
+        subscription.unsubscribe();
 
-        expect(jobTemplate.blockData.clearJobs).toBe(false);
+        expect(emissions).toEqual([firstTemplate]);
         expect(service.getJobById('old-job')).toBeUndefined();
         expect(service.getJobTemplateById('old-template')).toBeUndefined();
-        expect(service.getJobTemplateById(jobTemplate.blockData.id)).toBe(jobTemplate);
+        expect(service.getJobTemplateById(firstTemplate.blockData.id)).toBe(firstTemplate);
     });
 
     it('should increment job ids when jobs are added', () => {
