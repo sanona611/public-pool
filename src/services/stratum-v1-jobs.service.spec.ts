@@ -79,7 +79,7 @@ describe('StratumV1JobsService', () => {
     });
 
     it('should not emit a job when transaction identity changes without a new block', async () => {
-        const firstTemplate = await firstValueFrom(service.newMiningJob$);
+        await firstValueFrom(service.newMiningJob$);
         const emissions = [];
         const subscription = service.newMiningJob$.subscribe(jobTemplate => {
             emissions.push(jobTemplate);
