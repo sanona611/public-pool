@@ -100,10 +100,10 @@ export class MiningJob {
         return bitcoinjs.Transaction.fromBuffer(this.coinbaseTransaction.toBuffer());
     }
 
-    public buildHeaderBuffer(jobTemplate: IJobTemplate, versionMask: number, nonce: number, extraNonce: string, extraNonce2: string, timestamp: number): Buffer {
+    public buildHeaderBuffer(jobTemplate: IJobTemplate, versionMask: number, nonce: number, extraNonce: string, timestamp: number): Buffer {
         const coinbaseBuffer = Buffer.concat([
             this.coinbasePart1Buffer,
-            Buffer.from(`${extraNonce}${extraNonce2}`, 'hex'),
+            Buffer.from(extraNonce, 'hex'),
             this.coinbasePart2Buffer,
         ]);
         const coinbaseHash = bitcoinjs.crypto.hash256(coinbaseBuffer);
@@ -125,7 +125,7 @@ export class MiningJob {
         return header;
     }
 
-    public copyAndUpdateBlock(jobTemplate: IJobTemplate, versionMask: number, nonce: number, extraNonce: string, extraNonce2: string, timestamp: number): bitcoinjs.Block {
+    public copyAndUpdateBlock(jobTemplate: IJobTemplate, versionMask: number, nonce: number, extraNonce: string, timestamp: number): bitcoinjs.Block {
 
         const testBlock = Object.assign(new bitcoinjs.Block(), jobTemplate.block);
         testBlock.transactions = jobTemplate.block.transactions.map(tx => {
@@ -144,7 +144,7 @@ export class MiningJob {
         // set the nonces
         const nonceScript = testBlock.transactions[0].ins[0].script.toString('hex');
 
-        testBlock.transactions[0].ins[0].script = Buffer.from(`${nonceScript.substring(0, nonceScript.length - (TOTAL_EXTRANONCE_SIZE_BYTES * 2))}${extraNonce}${extraNonce2}`, 'hex');
+        testBlock.transactions[0].ins[0].script = Buffer.from(`${nonceScript.substring(0, nonceScript.length - (TOTAL_EXTRANONCE_SIZE_BYTES * 2))}${extraNonce}`, 'hex');
 
         //recompute the root since we updated the coinbase script with the nonces
         testBlock.merkleRoot = this.calculateMerkleRootHash(testBlock.transactions[0].getHash(false), this.merkleBranchBuffers);

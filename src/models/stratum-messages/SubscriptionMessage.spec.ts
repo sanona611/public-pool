@@ -26,7 +26,7 @@ describe('SubscriptionMessage', () => {
         expect(message.userAgent).toBe('unknown');
     });
 
-    it('should respond with extranonce2 size of 8 bytes', () => {
+    it('should respond with one 12-byte ExtraNonce and no separate extranonce2', () => {
         const message = plainToInstance(
             SubscriptionMessage,
             JSON.parse('{"id":1,"method":"mining.subscribe","params":["bitaxe v2.2"]}')
@@ -37,8 +37,8 @@ describe('SubscriptionMessage', () => {
             error: null,
             result: [
                 [['mining.notify', '57a6f098']],
-                '57a6f098',
-                8
+                '57a6f0980000000000000000',
+                0
             ]
         });
     });

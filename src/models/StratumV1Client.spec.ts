@@ -541,7 +541,7 @@ describe('StratumV1Client', () => {
 
         expect((client as any).write).lastCalledWith(expect.stringContaining(`"error":[20,"Mining Submit validation error"`));
         expect(socket.destroy).toHaveBeenCalled();
-        expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('Mining Submit validation error: extraNonce2:isLength'));
+        expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('Mining Submit validation error: extraNonce:isLength'));
     });
 
     it('should throttle repeated mining submit validation logs', async () => {

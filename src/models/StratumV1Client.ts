@@ -24,7 +24,7 @@ import { ConfigurationMessage } from './stratum-messages/ConfigurationMessage';
 import { MiningSubmitMessage } from './stratum-messages/MiningSubmitMessage';
 import { StratumErrorMessage } from './stratum-messages/StratumErrorMessage';
 import { SubscriptionMessage } from './stratum-messages/SubscriptionMessage';
-import { EXTRANONCE1_SIZE_BYTES } from './stratum.constants';
+import { EXTRANONCE_PREFIX_SIZE_BYTES } from './stratum.constants';
 import { SuggestDifficulty } from './stratum-messages/SuggestDifficultyMessage';
 import { StratumV1ClientStatistics } from './StratumV1ClientStatistics';
 import { ExternalSharesService } from '../services/external-shares.service';
@@ -115,7 +115,7 @@ export class StratumV1Client {
     }
 
     private getRandomHexString() {
-        const randomBytes = crypto.randomBytes(EXTRANONCE1_SIZE_BYTES);
+        const randomBytes = crypto.randomBytes(EXTRANONCE_PREFIX_SIZE_BYTES);
         return randomBytes.toString('hex');
     }
 
@@ -522,9 +522,19 @@ export class StratumV1Client {
             return false;
         }
 
+        if (!submission.extraNonce.startsWith(this.extraNonceAndSessionId)) {
+            const err = new StratumErrorMessage(
+                submission.id,
+                eStratumErrorCode.OtherUnknown,
+                'ExtraNonce prefix does not belong to this connection').response();
+            const success = await this.write(err);
+            if (!success) return false;
+            return false;
+        }
+
         const submissionHash = [
             submission.jobId,
-            submission.extraNonce2,
+            submission.extraNonce,
             submission.ntime,
             submission.nonce,
             submission.versionMask ?? ''
@@ -551,8 +561,7 @@ export class StratumV1Client {
             jobTemplate,
             versionMask,
             nonce,
-            this.extraNonceAndSessionId,
-            submission.extraNonce2,
+            submission.extraNonce,
             timestamp
         );
         const { submissionDifficulty } = this.calculateDifficulty(header);
@@ -572,8 +581,7 @@ export class StratumV1Client {
                     jobTemplate,
                     versionMask,
                     nonce,
-                    this.extraNonceAndSessionId,
-                    submission.extraNonce2,
+                    submission.extraNonce,
                     timestamp
                 );
                 const blockHex = updatedJobBlock.toHex(false);

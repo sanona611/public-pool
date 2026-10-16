@@ -2,7 +2,7 @@ import { Expose, Transform } from 'class-transformer';
 import { ArrayMaxSize, ArrayMinSize, IsArray, IsString, Length } from 'class-validator';
 
 import { eRequestMethod } from '../enums/eRequestMethod';
-import { EXTRANONCE2_SIZE_BYTES } from '../stratum.constants';
+import { TOTAL_EXTRANONCE_SIZE_BYTES } from '../stratum.constants';
 import { StratumBaseMessage } from './StratumBaseMessage';
 import * as bitcoinjs from 'bitcoinjs-lib';
 
@@ -28,11 +28,11 @@ export class MiningSubmitMessage extends StratumBaseMessage {
     public jobId: string;
     @Expose()
     @IsString()
-    @Length(EXTRANONCE2_SIZE_BYTES * 2, EXTRANONCE2_SIZE_BYTES * 2)
+    @Length(TOTAL_EXTRANONCE_SIZE_BYTES * 2, TOTAL_EXTRANONCE_SIZE_BYTES * 2)
     @Transform(({ value, key, obj, type }) => {
         return obj.params[2];
     })
-    public extraNonce2: string;
+    public extraNonce: string;
     @Expose()
     @IsString()
     @Transform(({ value, key, obj, type }) => {
@@ -68,7 +68,7 @@ export class MiningSubmitMessage extends StratumBaseMessage {
     }
 
     public hash(): string{
-        const buffer = Buffer.from(this.versionMask + this.nonce + this.extraNonce2 + this.ntime + this.jobId);
+        const buffer = Buffer.from(this.versionMask + this.nonce + this.extraNonce + this.ntime + this.jobId);
         return bitcoinjs.crypto.hash256(buffer).toString('base64');
     }
 

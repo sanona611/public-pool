@@ -217,22 +217,20 @@ describe('MiningJob', () => {
             jest.useRealTimers();
         });
 
-        it('should split coinbase around 12 bytes of extranonce space', () => {
+        it('should use one 12-byte ExtraNonce field', () => {
             const notify = JSON.parse(job.response(jobTemplate));
             const coinbasePart1 = notify.params[2];
             const coinbasePart2 = notify.params[3];
-            const extraNonce1 = '57a6f098';
-            const extraNonce2 = 'c708000000000000';
-            const coinbase = bitcoinjs.Transaction.fromHex(`${coinbasePart1}${extraNonce1}${extraNonce2}${coinbasePart2}`);
+            const extraNonce = '57a6f098c708000000000000';
+            const coinbase = bitcoinjs.Transaction.fromHex(`${coinbasePart1}${extraNonce}${coinbasePart2}`);
 
-            expect(Buffer.byteLength(extraNonce1 + extraNonce2, 'hex')).toBe(12);
-            expect(coinbase.ins[0].script.toString('hex')).toContain(`${extraNonce1}${extraNonce2}`);
-            expect(coinbase.ins[0].script.toString('hex').endsWith(`${extraNonce1}${extraNonce2}`)).toBe(true);
+            expect(Buffer.byteLength(extraNonce, 'hex')).toBe(12);
+            expect(coinbase.ins[0].script.toString('hex')).toContain(`${extraNonce}`);
+            expect(coinbase.ins[0].script.toString('hex').endsWith(`${extraNonce}`)).toBe(true);
         });
 
         it('should update block nonce, timestamp, version mask, and coinbase script', () => {
-            const extraNonce1 = '57a6f098';
-            const extraNonce2 = 'c708000000000000';
+            const extraNonce = '57a6f098c708000000000000';
             const timestamp = parseInt(MockRecording1.TIME, 16);
             const originalMerkleRoot = Buffer.from(jobTemplate.block.merkleRoot);
 
@@ -240,15 +238,14 @@ describe('MiningJob', () => {
                 jobTemplate,
                 parseInt('00002000', 16),
                 parseInt('ed460d91', 16),
-                extraNonce1,
-                extraNonce2,
+                extraNonce,
                 timestamp
             );
 
             expect(updatedBlock.nonce).toBe(parseInt('ed460d91', 16));
             expect(updatedBlock.timestamp).toBe(timestamp);
             expect(updatedBlock.version).toBe(jobTemplate.block.version ^ parseInt('00002000', 16));
-            expect(updatedBlock.transactions[0].ins[0].script.toString('hex').endsWith(`${extraNonce1}${extraNonce2}`)).toBe(true);
+            expect(updatedBlock.transactions[0].ins[0].script.toString('hex').endsWith(`${extraNonce}`)).toBe(true);
             expect(updatedBlock.merkleRoot.equals(originalMerkleRoot)).toBe(false);
         });
 
@@ -257,8 +254,7 @@ describe('MiningJob', () => {
                 jobTemplate,
                 0,
                 parseInt('ed460d91', 16),
-                '57a6f098',
-                'c708000000000000',
+                '57a6f098c708000000000000',
                 parseInt(MockRecording1.TIME, 16)
             );
 
@@ -268,24 +264,21 @@ describe('MiningJob', () => {
         it('should build the same header as the full block update path', () => {
             const versionMask = parseInt('00002000', 16);
             const nonce = parseInt('ed460d91', 16);
-            const extraNonce1 = '57a6f098';
-            const extraNonce2 = 'c708000000000000';
+            const extraNonce = '57a6f098c708000000000000';
             const timestamp = parseInt(MockRecording1.TIME, 16);
 
             const updatedBlock = job.copyAndUpdateBlock(
                 jobTemplate,
                 versionMask,
                 nonce,
-                extraNonce1,
-                extraNonce2,
+                extraNonce,
                 timestamp
             );
             const fastHeader = job.buildHeaderBuffer(
                 jobTemplate,
                 versionMask,
                 nonce,
-                extraNonce1,
-                extraNonce2,
+                extraNonce,
                 timestamp
             );
 
