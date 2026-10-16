@@ -25,7 +25,7 @@ describe('MiningSubmitMessage', () => {
             expect(message.id).toEqual(5);
             expect(message.userId).toEqual('tb1qumezefzdeqqwn5zfvgdrhxjzc5ylr39uhuxcz4.bitaxe3');
             expect(message.jobId).toEqual('1');
-            expect(message.extraNonce).toEqual('9902000000000000');
+            expect(message.extraNonce).toEqual('57a6f0989902000000000000');
             expect(message.ntime).toEqual('64b1f10f');
             expect(message.nonce).toEqual('2402812d');
             expect(message.versionMask).toEqual('00006000');
