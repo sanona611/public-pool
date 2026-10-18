@@ -221,13 +221,13 @@ describe('MiningJob', () => {
             const notify = JSON.parse(job.response(jobTemplate));
             const coinbasePart1 = notify.params[2];
             const coinbasePart2 = notify.params[3];
-            const extraNonce1 = '57a6f098';
-            const extraNonce2 = 'c708000000000000';
-            const coinbase = bitcoinjs.Transaction.fromHex(`${coinbasePart1}${extraNonce1}${extraNonce2}${coinbasePart2}`);
+            const extraNonce1 = '57a6f098a1b2c3d4';
+            const extraNonce2 = 'c7080000';
+            const coinbase = bitcoinjs.Transaction.fromHex(`${coinbasePart1}${extraNonce2}${extraNonce1}${coinbasePart2}`);
 
             expect(Buffer.byteLength(extraNonce1 + extraNonce2, 'hex')).toBe(12);
-            expect(coinbase.ins[0].script.toString('hex')).toContain(`${extraNonce1}${extraNonce2}`);
-            expect(coinbase.ins[0].script.toString('hex').endsWith(`${extraNonce1}${extraNonce2}`)).toBe(true);
+            expect(coinbase.ins[0].script.toString('hex')).toContain(`${extraNonce2}${extraNonce1}`);
+            expect(coinbase.ins[0].script.toString('hex').endsWith(`${extraNonce2}${extraNonce1}`)).toBe(true);
         });
 
         it('should update block nonce, timestamp, version mask, and coinbase script', () => {
@@ -257,8 +257,8 @@ describe('MiningJob', () => {
                 jobTemplate,
                 0,
                 parseInt('ed460d91', 16),
-                '57a6f098',
-                'c708000000000000',
+                '57a6f098a1b2c3d4',
+                'c7080000',
                 parseInt(MockRecording1.TIME, 16)
             );
 
