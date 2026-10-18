@@ -33,8 +33,6 @@ export class StratumV1JobsService {
 
     public blocks: { [id: number]: IJobTemplate } = {};
 
-    // offset the interval so that all the cluster processes don't try and refresh at the same time.
-    private delay = process.env.NODE_APP_INSTANCE == null ? 0 : parseInt(process.env.NODE_APP_INSTANCE) * 5000;
     private lastBlockHeight = 0;
     private lastWorkSignature: string;
 
