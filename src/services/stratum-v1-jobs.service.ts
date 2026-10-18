@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import * as bitcoinjs from 'bitcoinjs-lib';
 import * as merkle from 'merkle-lib';
 import * as merkleProof from 'merkle-lib/proof';
-import { combineLatest, delay, filter, from, interval, map, Observable, shareReplay, startWith, switchMap, tap } from 'rxjs';
+import { filter, from, map, Observable, shareReplay, switchMap, tap } from 'rxjs';
 
 import { MiningJob } from '../models/MiningJob';
 import { BitcoinRpcService } from './bitcoin-rpc.service';
@@ -42,12 +42,9 @@ export class StratumV1JobsService {
         private readonly bitcoinRpcService: BitcoinRpcService
     ) {
 
-        const refreshInterval$ = this.delay > 0
-            ? interval(60000).pipe(delay(this.delay), startWith(-1))
-            : interval(60000).pipe(startWith(-1));
-
-        this.newMiningJob$ = combineLatest([this.bitcoinRpcService.newBlock$, refreshInterval$]).pipe(
-            switchMap(([miningInfo, interval]) => {
+        // Generate a new mining job only when Bitcoin Core reports a new block.
+        this.newMiningJob$ = this.bitcoinRpcService.newBlock$.pipe(
+            switchMap((miningInfo) => {
                 return from(this.bitcoinRpcService.getBlockTemplate(miningInfo.blocks)).pipe(map((blockTemplate) => {
                     return {
                         blockTemplate,
