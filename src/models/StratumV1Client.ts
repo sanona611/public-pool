@@ -115,8 +115,8 @@ export class StratumV1Client {
     }
 
     private getRandomHexString() {
-        const randomBytes = crypto.randomBytes(EXTRANONCE1_SIZE_BYTES);
-        return randomBytes.toString('hex');
+        const randomValue = crypto.randomInt(0, 256);
+        return randomValue.toString(16).padStart(EXTRANONCE1_SIZE_BYTES * 2, '0');
     }
 
 
