@@ -103,7 +103,7 @@ export class MiningJob {
     public buildHeaderBuffer(jobTemplate: IJobTemplate, versionMask: number, nonce: number, extraNonce: string, extraNonce2: string, timestamp: number): Buffer {
         const coinbaseBuffer = Buffer.concat([
             this.coinbasePart1Buffer,
-            Buffer.from(`${extraNonce}${extraNonce2}`, 'hex'),
+            Buffer.from(`${extraNonce2}${extraNonce}`, 'hex'),
             this.coinbasePart2Buffer,
         ]);
         const coinbaseHash = bitcoinjs.crypto.hash256(coinbaseBuffer);
@@ -144,7 +144,7 @@ export class MiningJob {
         // set the nonces
         const nonceScript = testBlock.transactions[0].ins[0].script.toString('hex');
 
-        testBlock.transactions[0].ins[0].script = Buffer.from(`${nonceScript.substring(0, nonceScript.length - (TOTAL_EXTRANONCE_SIZE_BYTES * 2))}${extraNonce}${extraNonce2}`, 'hex');
+        testBlock.transactions[0].ins[0].script = Buffer.from(`${nonceScript.substring(0, nonceScript.length - (TOTAL_EXTRANONCE_SIZE_BYTES * 2))}${extraNonce2}${extraNonce}`, 'hex');
 
         //recompute the root since we updated the coinbase script with the nonces
         testBlock.merkleRoot = this.calculateMerkleRootHash(testBlock.transactions[0].getHash(false), this.merkleBranchBuffers);
