@@ -29,6 +29,9 @@ import { SuggestDifficulty } from './stratum-messages/SuggestDifficultyMessage';
 import { StratumV1ClientStatistics } from './StratumV1ClientStatistics';
 import { ExternalSharesService } from '../services/external-shares.service';
 
+const activeExtraNonce1Values = new Set<string>();
+let nextExtraNonce1Value = 0;
+
 const TRUE_DIFF_ONE = 2.695953529101131e67;
 const BLOCKED_USER_AGENT_LOG_INTERVAL_MS = 60 * 1000;
 const VALIDATION_ERROR_LOG_INTERVAL_MS = 60 * 1000;
@@ -102,6 +105,10 @@ export class StratumV1Client {
 
     public async destroy() {
 
+        if (this.extraNonce1) {
+            activeExtraNonce1Values.delete(this.extraNonce1);
+        }
+
         if (this.extraNonceAndSessionId) {
             await this.clientService.delete(this.extraNonceAndSessionId);
         }
@@ -118,6 +125,19 @@ export class StratumV1Client {
     private getRandomHexString(sizeBytes: number) {
         const randomBytes = crypto.randomBytes(sizeBytes);
         return randomBytes.toString('hex');
+    }
+
+    private allocateExtraNonce1(): string {
+        const valueCount = 2 ** (EXTRANONCE1_SIZE_BYTES * 8);
+        for (let i = 0; i < valueCount; i++) {
+            const value = Buffer.from([nextExtraNonce1Value]).toString('hex');
+            nextExtraNonce1Value = (nextExtraNonce1Value + 1) % valueCount;
+            if (!activeExtraNonce1Values.has(value)) {
+                activeExtraNonce1Values.add(value);
+                return value;
+            }
+        }
+        throw new Error(`All ${valueCount} extranonce1 values are currently in use`);
     }
 
 
@@ -161,7 +181,7 @@ export class StratumV1Client {
                         this.sessionStart = new Date();
                         this.statistics = new StratumV1ClientStatistics(this.clientStatisticsService);
                         this.extraNonceAndSessionId = this.getRandomHexString(4);
-                        this.extraNonce1 = this.getRandomHexString(EXTRANONCE1_SIZE_BYTES);
+                        this.extraNonce1 = this.allocateExtraNonce1();
                         console.log(`New client ID: : ${this.extraNonceAndSessionId}, ${this.socket.remoteAddress}:${this.socket.remotePort}`);
                     }
 
