@@ -574,7 +574,7 @@ export class StratumV1Client {
                     jobTemplate,
                     versionMask,
                     nonce,
-                    this.extraNonceAndSessionId,
+                    this.extraNonce1,
                     submission.extraNonce2,
                     timestamp
                 );
