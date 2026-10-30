@@ -221,8 +221,8 @@ describe('MiningJob', () => {
             const notify = JSON.parse(job.response(jobTemplate));
             const coinbasePart1 = notify.params[2];
             const coinbasePart2 = notify.params[3];
-            const extraNonce1 = '57a6f098';
-            const extraNonce2 = 'c708000000000000';
+            const extraNonce1 = 'a6';
+            const extraNonce2 = 'c708000000000000000000';
             const coinbase = bitcoinjs.Transaction.fromHex(`${coinbasePart1}${extraNonce1}${extraNonce2}${coinbasePart2}`);
 
             expect(Buffer.byteLength(extraNonce1 + extraNonce2, 'hex')).toBe(12);
@@ -231,8 +231,8 @@ describe('MiningJob', () => {
         });
 
         it('should update block nonce, timestamp, version mask, and coinbase script', () => {
-            const extraNonce1 = '57a6f098';
-            const extraNonce2 = 'c708000000000000';
+            const extraNonce1 = 'a6';
+            const extraNonce2 = 'c708000000000000000000';
             const timestamp = parseInt(MockRecording1.TIME, 16);
             const originalMerkleRoot = Buffer.from(jobTemplate.block.merkleRoot);
 
@@ -257,8 +257,8 @@ describe('MiningJob', () => {
                 jobTemplate,
                 0,
                 parseInt('ed460d91', 16),
-                '57a6f098',
-                'c708000000000000',
+                'a6',
+                'c708000000000000000000',
                 parseInt(MockRecording1.TIME, 16)
             );
 
@@ -268,8 +268,8 @@ describe('MiningJob', () => {
         it('should build the same header as the full block update path', () => {
             const versionMask = parseInt('00002000', 16);
             const nonce = parseInt('ed460d91', 16);
-            const extraNonce1 = '57a6f098';
-            const extraNonce2 = 'c708000000000000';
+            const extraNonce1 = 'a6';
+            const extraNonce2 = 'c708000000000000000000';
             const timestamp = parseInt(MockRecording1.TIME, 16);
 
             const updatedBlock = job.copyAndUpdateBlock(
