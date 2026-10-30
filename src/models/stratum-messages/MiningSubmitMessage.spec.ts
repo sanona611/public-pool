@@ -14,7 +14,7 @@ describe('MiningSubmitMessage', () => {
 
     describe('test message parsing', () => {
 
-        const MINING_SUBMIT_MESSAGE = ' {"id": 5, "method": "mining.submit", "params": ["tb1qumezefzdeqqwn5zfvgdrhxjzc5ylr39uhuxcz4.bitaxe3", "1", "990200000000000000000000", "64b1f10f", "2402812d", "00006000"]}'
+        const MINING_SUBMIT_MESSAGE = ' {"id": 5, "method": "mining.submit", "params": ["tb1qumezefzdeqqwn5zfvgdrhxjzc5ylr39uhuxcz4.bitaxe3", "1", "9902000000000000000000", "64b1f10f", "2402812d", "00006000"]}'
 
         const message = plainToInstance(
             MiningSubmitMessage,
