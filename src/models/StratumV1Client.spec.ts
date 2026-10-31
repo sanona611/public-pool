@@ -183,7 +183,7 @@ describe('StratumV1Client', () => {
         );
 
         client.extraNonceAndSessionId = MockRecording1.EXTRA_NONCE;
-        jest.spyOn(client as any, 'getRandomHexString').mockReturnValue(MockRecording1.EXTRA_NONCE);
+        jest.spyOn(client as any, 'getRandomHexString').mockImplementation((byteLength: number) => byteLength === 11 ? MockRecording1.EXTRANONCE1 : MockRecording1.EXTRA_NONCE);
 
     });
 
@@ -214,7 +214,7 @@ describe('StratumV1Client', () => {
 
         await new Promise((r) => setTimeout(r, 1));
 
-        expect(socket.write).toHaveBeenCalledWith(`{"id":1,"error":null,"result":[[["mining.notify","${client.extraNonceAndSessionId}"]],"${client.extraNonceAndSessionId}",8]}\n`, expect.any(Function));
+        expect(socket.write).toHaveBeenCalledWith(`{"id":1,"error":null,"result":[[["mining.notify","${MockRecording1.EXTRANONCE1}"]],"${MockRecording1.EXTRANONCE1}",1]}\n`, expect.any(Function));
 
     });
 
@@ -491,7 +491,7 @@ describe('StratumV1Client', () => {
         emitMessage(MockRecording1.MINING_AUTHORIZE);
         await new Promise((r) => setTimeout(r, 100));
 
-        emitMessage(`{"id": 5, "method": "mining.submit", "params": ["tb1qumezefzdeqqwn5zfvgdrhxjzc5ylr39uhuxcz4.bitaxe3", "ff", "c708000000000000", "64b3f3ec", "ed460d91", "00002000"]}`);
+        emitMessage(`{"id": 5, "method": "mining.submit", "params": ["tb1qumezefzdeqqwn5zfvgdrhxjzc5ylr39uhuxcz4.bitaxe3", "ff", "c7", "64b3f3ec", "ed460d91", "00002000"]}`);
         await new Promise((r) => setTimeout(r, 100));
 
         expect((client as any).write).lastCalledWith(`{"id":5,"result":null,"error":[21,"Job not found",""]}\n`);
@@ -529,14 +529,14 @@ describe('StratumV1Client', () => {
         expect(await clientService.connectedClientCount()).toBe(0);
     });
 
-    it('should reject submissions with short extranonce2 values', async () => {
+    it('should reject submissions with long extranonce2 values', async () => {
         jest.spyOn(client as any, 'write').mockImplementation((data) => Promise.resolve(true));
 
         emitMessage(MockRecording1.MINING_SUBSCRIBE);
         emitMessage(MockRecording1.MINING_AUTHORIZE);
         await new Promise((r) => setTimeout(r, 100));
 
-        emitMessage(`{"id": 5, "method": "mining.submit", "params": ["tb1qumezefzdeqqwn5zfvgdrhxjzc5ylr39uhuxcz4.bitaxe3", "1", "c7080000", "64b3f3ec", "ed460d91", "00002000"]}`);
+        emitMessage(`{"id": 5, "method": "mining.submit", "params": ["tb1qumezefzdeqqwn5zfvgdrhxjzc5ylr39uhuxcz4.bitaxe3", "1", "c708", "64b3f3ec", "ed460d91", "00002000"]}`);
         await new Promise((r) => setTimeout(r, 100));
 
         expect((client as any).write).lastCalledWith(expect.stringContaining(`"error":[20,"Mining Submit validation error"`));
@@ -551,7 +551,7 @@ describe('StratumV1Client', () => {
         emitMessage(MockRecording1.MINING_AUTHORIZE);
         await new Promise((r) => setTimeout(r, 100));
 
-        emitMessage(`{"id": 5, "method": "mining.submit", "params": ["tb1qumezefzdeqqwn5zfvgdrhxjzc5ylr39uhuxcz4.bitaxe3", "1", "c7080000", "64b3f3ec", "ed460d91", "00002000"]}`);
+        emitMessage(`{"id": 5, "method": "mining.submit", "params": ["tb1qumezefzdeqqwn5zfvgdrhxjzc5ylr39uhuxcz4.bitaxe3", "1", "c708", "64b3f3ec", "ed460d91", "00002000"]}`);
         await new Promise((r) => setTimeout(r, 100));
 
         const secondSocket = new Socket();
@@ -574,12 +574,12 @@ describe('StratumV1Client', () => {
             externalSharesService
         );
         jest.spyOn(secondClient as any, 'write').mockImplementation((data) => Promise.resolve(true));
-        jest.spyOn(secondClient as any, 'getRandomHexString').mockReturnValue(MockRecording1.EXTRA_NONCE);
+        jest.spyOn(secondClient as any, 'getRandomHexString').mockImplementation((byteLength: number) => byteLength === 11 ? MockRecording1.EXTRANONCE1 : MockRecording1.EXTRA_NONCE);
 
         socketEmitter(Buffer.from(`${MockRecording1.MINING_SUBSCRIBE}\n`));
         socketEmitter(Buffer.from(`${MockRecording1.MINING_AUTHORIZE}\n`));
         await new Promise((r) => setTimeout(r, 100));
-        socketEmitter(Buffer.from(`{"id": 5, "method": "mining.submit", "params": ["tb1qumezefzdeqqwn5zfvgdrhxjzc5ylr39uhuxcz4.bitaxe3", "1", "c7080000", "64b3f3ec", "ed460d91", "00002000"]}\n`));
+        socketEmitter(Buffer.from(`{"id": 5, "method": "mining.submit", "params": ["tb1qumezefzdeqqwn5zfvgdrhxjzc5ylr39uhuxcz4.bitaxe3", "1", "c708", "64b3f3ec", "ed460d91", "00002000"]}\n`));
         await new Promise((r) => setTimeout(r, 100));
 
         expect(consoleWarnSpy.mock.calls.filter(call => call[0]?.startsWith('Mining Submit validation error'))).toHaveLength(1);
