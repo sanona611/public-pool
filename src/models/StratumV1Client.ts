@@ -53,6 +53,7 @@ export class StratumV1Client {
     private creatingEntity: Promise<void>;
 
     public extraNonceAndSessionId: string;
+    public extranonce1: string;
     public sessionStart: Date;
     public noFee: boolean;
     public hashRate: number = 0;
@@ -114,8 +115,8 @@ export class StratumV1Client {
         });
     }
 
-    private getRandomHexString() {
-        const randomBytes = crypto.randomBytes(EXTRANONCE1_SIZE_BYTES);
+    private getRandomHexString(byteLength: number) {
+        const randomBytes = crypto.randomBytes(byteLength);
         return randomBytes.toString('hex');
     }
 
@@ -159,12 +160,13 @@ export class StratumV1Client {
                     if (this.sessionStart == null) {
                         this.sessionStart = new Date();
                         this.statistics = new StratumV1ClientStatistics(this.clientStatisticsService);
-                        this.extraNonceAndSessionId = this.getRandomHexString();
+                        this.extraNonceAndSessionId = this.getRandomHexString(4);
+                        this.extranonce1 = this.getRandomHexString(EXTRANONCE1_SIZE_BYTES);
                         console.log(`New client ID: : ${this.extraNonceAndSessionId}, ${this.socket.remoteAddress}:${this.socket.remotePort}`);
                     }
 
                     this.clientSubscription = subscriptionMessage;
-                    const success = await this.write(JSON.stringify(this.clientSubscription.response(this.extraNonceAndSessionId)) + '\n');
+                    const success = await this.write(JSON.stringify(this.clientSubscription.response(this.extranonce1)) + '\n');
                     if (!success) {
                         return;
                     }
@@ -551,7 +553,7 @@ export class StratumV1Client {
             jobTemplate,
             versionMask,
             nonce,
-            this.extraNonceAndSessionId,
+            this.extranonce1,
             submission.extraNonce2,
             timestamp
         );
@@ -572,7 +574,7 @@ export class StratumV1Client {
                     jobTemplate,
                     versionMask,
                     nonce,
-                    this.extraNonceAndSessionId,
+                    this.extranonce1,
                     submission.extraNonce2,
                     timestamp
                 );
