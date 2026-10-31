@@ -32,6 +32,7 @@ import { ExternalSharesService } from '../services/external-shares.service';
 const TRUE_DIFF_ONE = 2.695953529101131e67;
 const BLOCKED_USER_AGENT_LOG_INTERVAL_MS = 60 * 1000;
 const VALIDATION_ERROR_LOG_INTERVAL_MS = 60 * 1000;
+const SESSION_ID_SIZE_BYTES = 4;
 
 export class StratumV1Client {
     private static blockedUserAgentLogState = new Map<string, { nextLogAt: number, suppressed: number }>();
@@ -160,7 +161,7 @@ export class StratumV1Client {
                     if (this.sessionStart == null) {
                         this.sessionStart = new Date();
                         this.statistics = new StratumV1ClientStatistics(this.clientStatisticsService);
-                        this.extraNonceAndSessionId = this.getRandomHexString(4);
+                        this.extraNonceAndSessionId = this.getRandomHexString(SESSION_ID_SIZE_BYTES);
                         this.extranonce1 = this.getRandomHexString(EXTRANONCE1_SIZE_BYTES);
                         console.log(`New client ID: : ${this.extraNonceAndSessionId}, ${this.socket.remoteAddress}:${this.socket.remotePort}`);
                     }
